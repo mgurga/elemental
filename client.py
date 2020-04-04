@@ -51,11 +51,50 @@ while True:
 		regORlog = ""
 
 while True:
-	usermsg = input()
+	usermsg = input(currentserver + "/" + currentchannel + ": ")
 	if usermsg == "/createserver":
 		newservername = input("new server name: ")
 		newserverpass = input("new server password: ")
-		
+
+		newserverjson = json.loads("{}")
+		newserverjson["call"] = "createserver"
+		newserverjson["name"] = newservername
+		newserverjson["passwd"] = newserverpass
+		newserverjson["owner"] = usernm
+		serversocket.send((json.dumps(newserverjson)).encode(encoding))
+
+		servresponse = serversocket.recv(4096)
+		servresponsejson = json.loads(servresponse.decode(encoding))
+
+		if servresponsejson["resp"] == True:
+			print("server created")
+			currentserver = newservername
+			currentchannel = "general"
+		else:
+			print("server not created, " + servresponsejson.reason)
+	
+	elif usermsg == "/deleteserver":
+		delservername = input("server name: ")
+		delserverpasswd = input("server passwd: ")
+
+		delserverjson = json.loads("{}")
+		delserverjson["call"] = "deleteserver"
+		delserverjson["servername"] = delservername
+		delserverjson["serverpasswd"] = delserverpasswd
+		delserverjson["usernm"] = usernm
+		delserverjson["passwd"] = passwd
+		serversocket.send((json.dumps(delserverjson)).encode(encoding))
+
+		servresponse = serversocket.recv(4096)
+		servresponsejson = json.loads(servresponse.decode(encoding))
+
+		if servresponsejson["resp"] == True:
+			print("server successfully deleted")
+			if currentserver == delservername:
+				currentserver = ""
+			currentchannel = ""
+		else:
+			print("server not deleted, " + servresponsejson["reason"])
 	else:
 		usermsgjson = '{"call": "message", "msg": "' + usermsg + '"}'
 		serversocket.send(usermsgjson.encode(encoding))
