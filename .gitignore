@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+serverstorage/
 build/
 develop-eggs/
 dist/
@@ -123,3 +124,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+serverstorage/users/hello
