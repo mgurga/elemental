@@ -251,6 +251,7 @@ while True:
 					currentchannel = ""
 				else:
 					log("server not deleted, " + servresponsejson["reason"])
+
 		elif usermsg == "/listservers":
 			log("listing servers...")
 
@@ -271,8 +272,31 @@ while True:
 				else:
 					err("couldn't list servers, " + servresponsejson["reason"])
 
-		elif usermsg == "/joinserver":
+		elif usermsg == "/listchannels":
+			log("listing channels...")
 			
+			if not currentserver == "":
+				listrequest = json.loads("{}")
+				listrequest["call"] = "getserverchannels"
+				listrequest["servername"] = currentserver
+				listrequest["usernm"] = usernm
+				listrequest["passwd"] = passwd
+
+				serversocket.send((json.dumps(listrequest)).encode(encoding))
+
+				servresponse = serversocket.recv(4096)
+				servresponsejson = json.loads(servresponse.decode(encoding))
+
+				if servresponsejson.get("call") == None:
+					if servresponsejson["resp"] == True:
+						servers = servresponsejson["channels"]
+						log(" ".join(servers))
+					else:
+						err("couldn't list channels, " + servresponsejson["reason"])
+			else:
+				err("not connected to server")
+
+		elif usermsg == "/joinserver":
 			servername = input("input server name: ")
 			serverpasswd = input("input server password: ")
 
@@ -319,7 +343,76 @@ while True:
 						err("not apart of target server")
 				else:
 					err("couldn't get list of servers, " + servresponsejson["reason"])
-		
+
+		elif usermsg == "/gotochannel":
+			gotochannel = input("target channel: ")
+
+			listrequest = json.loads("{}")
+			listrequest["call"] = "getserverchannels"
+			listrequest["servername"] = currentserver
+			listrequest["usernm"] = usernm
+			listrequest["passwd"] = passwd
+
+			serversocket.send((json.dumps(listrequest)).encode(encoding))
+
+			servresponse = serversocket.recv(4096)
+			servresponsejson = json.loads(servresponse.decode(encoding))
+
+			if servresponsejson.get("call") == None:
+				if servresponsejson["resp"] == True:
+					if gotochannel in servresponsejson["channels"]:
+						log("connected to #" + gotochannel)
+						currentchannel = gotochannel
+						currentchannelmsgnum = -1
+						messagebuffer = []
+						drawterminal()
+					else:
+						err("not apart of target server")
+				else:
+					err("couldn't get list of servers, " + servresponsejson["reason"])
+
+		elif usermsg == "/createchannel":
+			newchannelname = input("new channel name: ")
+
+			newchannelrequest = json.loads("{}")
+			newchannelrequest["call"] = "createchannel"
+			newchannelrequest["name"] = newchannelname
+			newchannelrequest["servername"] = currentserver
+			newchannelrequest["usernm"] = usernm
+			newchannelrequest["passwd"] = passwd
+
+			serversocket.send((json.dumps(newchannelrequest)).encode(encoding))
+
+			servresponse = serversocket.recv(4096)
+			servresponsejson = json.loads(servresponse.decode(encoding))
+
+			if servresponsejson["resp"] == True:
+				log("channel has been created")
+			else:
+				err("couldn't create channel, " + servresponsejson["reason"])
+
+		elif usermsg == "/deletechannel":
+			todeletechannel = input("what channel do you want to delete: ")
+
+			delchannelrequest = json.loads("{}")
+			delchannelrequest["call"] = "deletechannel"
+			delchannelrequest["name"] = todeletechannel
+			delchannelrequest["servername"] = currentserver
+			delchannelrequest["usernm"] = usernm
+			delchannelrequest["passwd"] = passwd
+
+			serversocket.send((json.dumps(delchannelrequest)).encode(encoding))
+
+			servresponse = serversocket.recv(4096)
+			servresponsejson = json.loads(servresponse.decode(encoding))
+
+			if servresponsejson["resp"] == True:
+				log("channel has been deleted")
+				if currentchannel == todeletechannel:
+					currentchannel = ""
+			else:
+				err("couldn't create channel, " + servresponsejson["reason"])
+
 		elif len(usermsg) > 0 and usermsg[0] == "/":
 			log("command not recognized")
 

@@ -9,22 +9,26 @@ from threading import Thread
 
 parser = argparse.ArgumentParser(description='give the elemental server some command line arguments')
 
-parser.add_argument('--port', type=int, help='what port the server should run on', default=5005)
-parser.add_argument('--host', type=str, help='what host ip the server should run on', default="")
+parser.add_argument('--port', type=int, help='what port the provider should run on', default=5005)
+parser.add_argument('--host', type=str, help='what host ip the provider should run on', default="")
 parser.add_argument('--encoding', type=str, help='what encoding algorithm scheme to use, client must be the same', default="ascii")
+parser.add_argument('--providername', type=str, help='name of the provider', default="LOCALPROVIDER")
+parser.add_argument('--storagepath', type=str, help='name of the provider', default="serverstorage")
+parser.add_argument('--jsonfileindent', type=int, help='name of the provider', default=2)
+parser.add_argument('--sendotherusersdata', type=bool, help='name of the provider', default=False)
+parser.add_argument('--providerNameInConsole', type=str, help='name of the provider', default="[SERVER]")
 
 args = parser.parse_args()
 
 host = args.host
 port = args.port
 encoding = args.encoding
-providername = "LOCALPROVIDER"
+providername = args.providername
 providerwelcome = "welcome to your LOCALPROVIDER, the BEST test provider on localhost"
-
-serverStorage = "serverstorage"
-serverNameInConsole = "[SERVER]" # in console
-jsonfileindent = 2
-sendotherusersdata = False
+serverStorage = args.storagepath
+providerNameInConsole = args.providerNameInConsole
+jsonfileindent = args.jsonfileindent
+sendotherusersdata = args.sendotherusersdata
 
 clients = []
 
@@ -42,9 +46,9 @@ def new_client(clientsocket,addr):
 	while True:
 		try:
 			clientmsg = clientsocket.recv(4096)
-			print("(" + getTime() + ") | " + serverNameInConsole + " <== [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + clientmsg.decode(encoding))
+			print("(" + getTime() + ") | " + providerNameInConsole + " <== [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + clientmsg.decode(encoding))
 			resp = client.rawcommand(clientmsg.decode(encoding))
-			print("(" + getTime() + ") | " + serverNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + resp)
+			print("(" + getTime() + ") | " + providerNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + resp)
 			clientsocket.send(resp.encode(encoding))
 		except socket.error as e:
 			print("(" + getTime() + ") | closing connection because of socket error, details below")
@@ -260,9 +264,6 @@ class UserClient:
 		return json.dumps(outjson)
 
 	def getjoinedservers(self, usernm, passwd):
-		if not os.path.exists(serverStorage + os.sep + "users" + os.sep + usernm):
-			return '{"resp": false, "reason":"user does not exist"}'
-		
 		userinfo = self.openjson(serverStorage + os.sep + "users" + os.sep + usernm)
 
 		if not userinfo["passwd"] == passwd:
@@ -273,6 +274,40 @@ class UserClient:
 		outjson["servers"] = userinfo["joinedservers"]
 
 		return json.dumps(outjson)
+
+	def getserverchannels(self, usernm, servername):
+		if not os.path.exists(serverStorage + os.sep + "servers" + os.sep + servername):
+			return '{"resp": false, "reason":"server does not exist"}'
+		
+		serverinfo = self.openjson(serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+
+		if not usernm in serverinfo["users"]:
+			return '{"resp": false, "reason":"user not in server"}'
+
+		outjson = json.loads("{}")
+		outjson["resp"] = True
+		outjson["channels"] = serverinfo["channels"]
+
+		return json.dumps(outjson)
+
+	def deletechannel(self, name, servername, usernm):
+		if not os.path.exists(serverStorage + os.sep + "servers" + os.sep + servername):
+			return '{"resp": false, "reason":"server does not exist"}'
+		if not os.path.exists(serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name + os.sep + "messages"):
+			return '{"resp": false, "reason":"channel does not exist"}'
+
+		serverinfo = self.openjson(serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+
+		if not usernm == serverinfo["owner"]:
+			return '{"resp": false, "reason":"user not owner of the server"}'
+		
+		serverinfo["channels"].remove(name)
+
+		self.putjson(serverinfo, serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+
+		shutil.rmtree(serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name)
+
+		return '{"resp": true}'
 
 	def getprovidername(self):
 		providerinfo = json.loads("{}")
@@ -336,6 +371,10 @@ class UserClient:
 					return '{"resp": false, "reason":"requesting too many times, only request every 0.75 seconds"}'
 			elif call == "getprovidername":
 				return self.getprovidername()
+			elif call == "getserverchannels":
+				return self.getserverchannels(commandjson["usernm"], commandjson["servername"])
+			elif call == "deletechannel":
+				return self.deletechannel(commandjson["name"], commandjson["servername"], commandjson["usernm"])
 			else:
 				out = self.msg(command)
 				print("UNKNOWN CALL:")
@@ -365,7 +404,7 @@ class UserClient:
 					if servername in clients[i].joinedservers:
 						#print("sending")
 						jsontext = json.dumps(jsondata)
-						print("(" + getTime() + ") | " + serverNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + json.dumps(jsontext))
+						print("(" + getTime() + ") | " + providerNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + json.dumps(jsontext))
 						clients[i].clientsocket.send(jsontext.encode(encoding))
 
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
