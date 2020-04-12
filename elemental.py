@@ -321,26 +321,33 @@ class UserClient:
 		if command == "":
 			self.clientsocket.close()
 			return "CLIENT UNGRACEFULLY CLOSED"
+		
 		commandjson = json.loads(command)
 		call = commandjson["call"]
 
+		# Sanity Checks, makes sure usernm and passwd are in the request
 		if not (call == "login" or call == "register"):
 			if commandjson.get("usernm") == None:
 				return '{"resp": false, "reason":"usernm not in request"}'
 			if commandjson.get("passwd") == None:
 				return '{"resp": false, "reason":"passwd not in request"}'
+
+			commandjson["usernm"] = ''.join(commandjson["usernm"].split())
+			commandjson["passwd"] = ''.join(commandjson["passwd"].split())
+
 			if not os.path.exists(serverStorage + os.sep + "users" + os.sep + commandjson["usernm"]):
 				return '{"resp": false, "reason":"user does not exist"}'
 			userinfocheck = self.openjson(serverStorage + os.sep + "users" + os.sep + commandjson["usernm"])
 			if not userinfocheck["passwd"] == commandjson["passwd"]:
 				return '{"resp": false, "reason":"user password is incorrect"}'
+
 		try:
 			if call == "login":
 				return self.login(commandjson["usernm"], commandjson["passwd"])
 			elif call == "register":
 				return self.register(commandjson["usernm"], commandjson["passwd"])
 			elif call == "createserver":
-				return self.createserver(commandjson["servername"], commandjson["serverpasswd"], commandjson["owner"])
+				return self.createserver(commandjson["servername"], commandjson["serverpasswd"], commandjson["usernm"])
 			elif call == "joinserver":
 				return self.joinserver(commandjson["servername"], commandjson["serverpasswd"], commandjson["usernm"])
 			elif call == "createchannel":

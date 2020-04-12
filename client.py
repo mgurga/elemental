@@ -124,7 +124,10 @@ def updateMessages():
 				global currentchannelmsgnum
 				global totalmessagesinchannel
 
-				totalmessagesinchannel = servresponsejson["amount"] 
+				totalmessagesinchannel = servresponsejson["amount"]
+				if totalmessagesinchannel == 0:
+					currentchannelmsgnum = 0
+
 				if currentchannelmsgnum == -1:
 					if servresponsejson["amount"] < messagestoload:
 						begin = 0
@@ -135,7 +138,9 @@ def updateMessages():
 					begin = currentchannelmsgnum
 					end = servresponsejson["amount"]
 
-				if not (begin == 0 or end == 0):
+				#log("ccmn: " + str(currentchannelmsgnum) + "  amnt: " + str(servresponsejson["amount"]) + "   begin: " + str(begin) + "   end:" + str(end))
+
+				if not end == 0:
 					messagetotal = json.loads("{}")
 					messagetotal["call"] = "getmessages"
 					messagetotal["servername"] = currentserver
@@ -167,18 +172,13 @@ def updateMessages():
 		time.sleep(0.75)
 		
 def log(msg):
-	if terminalguimode == True:
-		messagebuffer.append(msg)
-		drawterminal()
-	else:
-		print(msg)
+	messagebuffer.append(msg)
+	drawterminal()
 
 def err(err):
-	if terminalguimode == True:
+	if len(messagebuffer) > 1:
 		messagebuffer[len(messagebuffer) - 1] = messagebuffer[len(messagebuffer) - 1] + "  !!!" + err + "!!!"
 		drawterminal()
-	else:
-		print(err)
 
 messageupdater = Thread(target=updateMessages)
 messageupdater.daemon = True
@@ -209,9 +209,8 @@ while True:
 
 			newserverjson = json.loads("{}")
 			newserverjson["call"] = "createserver"
-			newserverjson["name"] = newservername
+			newserverjson["servername"] = newservername
 			newserverjson["serverpasswd"] = newserverpass
-			#newserverjson["owner"] = usernm
 			newserverjson["usernm"] = usernm
 			newserverjson["passwd"] = passwd
 			serversocket.send((json.dumps(newserverjson)).encode(encoding))
@@ -224,6 +223,9 @@ while True:
 					log("server created")
 					currentserver = newservername
 					currentchannel = "general"
+					currentchannelmsgnum = 0
+					totalmessagesinchannel = 0
+					drawterminal()
 				else:
 					log("server not created, " + servresponsejson["reason"])
 		
@@ -339,6 +341,7 @@ while True:
 						currentchannel = "general"
 						currentchannelmsgnum = -1
 						messagebuffer = []
+						drawterminal()
 					else:
 						err("not apart of target server")
 				else:
