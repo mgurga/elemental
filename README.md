@@ -1,4 +1,5 @@
 # elemental
+[Elemental Demo Gif](https://raw.githubusercontent.com/rokie95/elemental/master/demos/elementaldemo.gif)
 - python 3
 - uses sockets
 - no dependencies
@@ -10,6 +11,8 @@
 <br/>
 
 ## Provider
+[Provider Demo Picture](https://raw.githubusercontent.com/rokie95/elemental/master/demos/providerlogin.png)
+
 This is what is going to be running 24/7 to provide servers for the users
 
 ### How it works
@@ -55,6 +58,8 @@ Wiki will go in depth on required values and responses
 - ```deletechannel```
 
 ## Client (client.py)
+[Client Picture Demo](https://raw.githubusercontent.com/rokie95/elemental/master/demos/clientserverpic.png)
+
 A very simple client meant to be used as an example
 - requires [blessed](https://pypi.org/project/blessed/)
 - command line client
