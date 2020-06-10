@@ -42,6 +42,7 @@ while True:
 		serversocket.send(loginjson.encode(encoding))
 
 		loginresp = serversocket.recv(4096)
+		#print("recvd: " + loginresp.decode(encoding))
 		loginrespjson = json.loads(loginresp.decode(encoding))
 		if loginrespjson["resp"] == True:
 			print("login completed, logged in as " + usernm)
