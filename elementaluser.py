@@ -20,25 +20,25 @@ class UserClient:
 		self.ECONFIG = ecfg
 
 	def register(self, usernm, passwd):
-		if os.path.exists(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm):
+		if os.path.exists(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm):
 			return '{"resp": false, "reason": "user already exists"}'
 		userstartjson = json.loads('{"passwd": "' + passwd + '"}')
 		userstartjson["timesloggedin"] = 0
 		userstartjson["joinedservers"] = []
-		self.putjson(userstartjson, self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
+		self.putjson(userstartjson, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
 		return '{"resp": true}'
 
 	def login(self, usernm, passwd):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm):
 			return '{"resp": false, "reason":"username does not exist"}'
 		
-		userfile = open(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm, "r")
+		userfile = open(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm, "r")
 		userfiletext = userfile.read()
 		userfilejson = json.loads(userfiletext)
 		userfilejson["timesloggedin"] = userfilejson["timesloggedin"] + 1
 		userfile.close()
 		if userfilejson["passwd"] == passwd:
-			self.putjson(userfilejson, self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
+			self.putjson(userfilejson, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
 			userfile.close()
 			self.usernm = usernm
 			self.passwd = passwd
@@ -48,16 +48,16 @@ class UserClient:
 			return '{"resp": false, "reason":"password is incorrect"}'
 	
 	def createserver(self, name, passwd, owner):
-		if os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + name):
+		if os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + name):
 			return '{"resp": false, "reason":"server already exists by that name"}'
 		
-		os.mkdir(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + name)
+		os.mkdir(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + name)
 		serverjson = json.loads('{}')
 		serverjson["owner"] = owner
 		serverjson["passwd"] = passwd
 		serverjson["channels"] = []
 		serverjson["users"] = []
-		self.putjson(serverjson, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + name + os.sep + "info")
+		self.putjson(serverjson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + name + os.sep + "info")
 
 		self.createchannel("general", name, owner)
 		self.joinserver(name, passwd, owner)
@@ -65,11 +65,11 @@ class UserClient:
 		return '{"resp": true}'
 
 	def createchannel(self, name, servername, usernm):
-		if os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name):
+		if os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + name):
 			return '{"resp": false, "reason":"channel already exists"}'
 
-		os.mkdir(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name)
-		serverinfofile = open(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info", "r")
+		os.mkdir(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + name)
+		serverinfofile = open(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info", "r")
 		serverinfojson = json.load(serverinfofile)
 		serverinfojson["channels"].append(name)
 		serverinfofile.close()
@@ -77,82 +77,82 @@ class UserClient:
 		if not usernm == serverinfojson["owner"]:
 			return '{"resp": false, "reason":"only owner can create channels"}'
 
-		self.putjson(serverinfojson, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		self.putjson(serverinfojson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		channelmessagesjson = json.loads('{}')
 		channelmessagesjson["messages"] = 0
 
-		self.putjson(channelmessagesjson, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name + os.sep + "messages")
+		self.putjson(channelmessagesjson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + name + os.sep + "messages")
 
 		return '{"resp": true}'
 
 	def joinserver(self, servername, serverpasswd, usernm):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
 			return '{"resp": false, "reason":"server does not exist"}'
 
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
-		userfile = self.openjson(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		userfile = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
 
 		if not serverinfo["passwd"] == serverpasswd:
 			return '{"resp": false, "reason":"incorrect server password"}'
 
 		serverinfo["users"].append(usernm)
-		self.putjson(serverinfo, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		self.putjson(serverinfo, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		userfile["joinedservers"].append(servername)
-		self.putjson(userfile, self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
+		self.putjson(userfile, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
 
 		return '{"resp": true}'
 
 	def deleteserver(self, servername, serverpasswd, usernm, passwd):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
 			return '{"resp": false, "reason":"server does not exist"}'
 
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 		serverusers = serverinfo["users"]
 
 		for i in range(0, len(serverusers)):
-			serveruserinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + serverusers[i])
+			serveruserinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + serverusers[i])
 			serveruserinfo["joinedservers"].remove(servername)
-			self.putjson(serveruserinfo, self.ECONFIG.serverStorage + os.sep + "users" + os.sep + serverusers[i])
+			self.putjson(serveruserinfo, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + serverusers[i])
 
-		shutil.rmtree(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername)
+		shutil.rmtree(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername)
 		return '{"resp": true}' 
 
 	def leaveserver(self, servername, usernm, passwd):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
 			return '{"resp": false, "reason":"server does not exist"}'
 
-		userinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 		userinfo["joinedservers"].remove(servername)
 		serverinfo["users"].remove(usernm)
 
-		self.putjson(userinfo, self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
-		self.putjson(serverinfo, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		self.putjson(userinfo, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
+		self.putjson(serverinfo, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		return '{"resp": true}'
 
 	def message(self, msg, servername, channel, usernm, passwd):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
 			return '{"resp": false, "reason":"server does not exist"}'
 
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
-		channelmessages = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		channelmessages = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
 
 		if not channel in serverinfo["channels"]:
 			return '{"resp": false, "reason":"channel does not exist"}'
 
 		channelmessages["messages"] = channelmessages["messages"] + 1
 
-		self.putjson(channelmessages, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
+		self.putjson(channelmessages, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
 
 		messagejson = json.loads("{}")
 		messagejson["message"] = msg
 		messagejson["timestamp"] = datetime.datetime.now().timestamp()
 		messagejson["author"] = usernm
 
-		self.putjson(messagejson, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + str(channelmessages["messages"] - 1))
+		self.putjson(messagejson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + str(channelmessages["messages"] - 1))
 
 		messagejson["call"] = "newmessage"
 		
@@ -165,9 +165,9 @@ class UserClient:
 		return '{"resp": true}'
 
 	def getmessages(self, servername, channel, begin, end, usernm):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
 			return '{"resp": false, "reason":"server does not exist"}'
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages"):
 			return '{"resp": false, "reason":"channel does not exist"}'
 		if not type(begin) is int:
 			return '{"resp": false, "reason":"begin is not an int"}'
@@ -178,8 +178,8 @@ class UserClient:
 		if end < 0 or begin < 0:
 			return '{"resp": false, "reason":"end or begin is less than 0"}'
 
-		channelmessages = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		channelmessages = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		if end > channelmessages["messages"] or begin > channelmessages["messages"]:
 			return '{"resp": false, "reason":"end or begin is less than 0"}'
@@ -191,18 +191,18 @@ class UserClient:
 		outjson["messages"] = []
 
 		for i in range(0, end - begin):
-			messagedata = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + str(begin + i))
+			messagedata = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + str(begin + i))
 			outjson["messages"].append(messagedata)
 
 		return json.dumps(outjson)
 
 	def gettotalmessages(self, servername, channel):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername):
 			return '{"resp": false, "reason":"server does not exist"}'
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages"):
 			return '{"resp": false, "reason":"channel does not exist"}'
 
-		channelmessages = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
+		channelmessages = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + "messages")
 
 		outjson = json.loads("{}")
 		outjson["resp"] = True
@@ -211,7 +211,7 @@ class UserClient:
 		return json.dumps(outjson)
 
 	def getjoinedservers(self, usernm, passwd):
-		userinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + usernm)
+		userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + usernm)
 
 		if not userinfo["passwd"] == passwd:
 			return '{"resp": false, "reason":"user password is incorrect"}'
@@ -223,10 +223,10 @@ class UserClient:
 		return json.dumps(outjson)
 
 	def getserverchannels(self, usernm, servername):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername):
 			return '{"resp": false, "reason":"server does not exist"}'
 		
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		if not usernm in serverinfo["users"]:
 			return '{"resp": false, "reason":"user not in server"}'
@@ -238,21 +238,21 @@ class UserClient:
 		return json.dumps(outjson)
 
 	def deletechannel(self, name, servername, usernm):
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername):
 			return '{"resp": false, "reason":"server does not exist"}'
-		if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name + os.sep + "messages"):
+		if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + name + os.sep + "messages"):
 			return '{"resp": false, "reason":"channel does not exist"}'
 
-		serverinfo = self.openjson(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
 		if not usernm == serverinfo["owner"]:
 			return '{"resp": false, "reason":"user not owner of the server"}'
 		
 		serverinfo["channels"].remove(name)
 
-		self.putjson(serverinfo, self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
+		self.putjson(serverinfo, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
-		shutil.rmtree(self.ECONFIG.serverStorage + os.sep + "servers" + os.sep + servername + os.sep + name)
+		shutil.rmtree(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + name)
 
 		return '{"resp": true}'
 
@@ -282,9 +282,9 @@ class UserClient:
 			commandjson["usernm"] = ''.join(commandjson["usernm"].split())
 			commandjson["passwd"] = ''.join(commandjson["passwd"].split())
 
-			if not os.path.exists(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + commandjson["usernm"]):
+			if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + commandjson["usernm"]):
 				return '{"resp": false, "reason":"user does not exist"}'
-			userinfocheck = self.openjson(self.ECONFIG.serverStorage + os.sep + "users" + os.sep + commandjson["usernm"])
+			userinfocheck = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + commandjson["usernm"])
 			if not userinfocheck["passwd"] == commandjson["passwd"]:
 				return '{"resp": false, "reason":"user password is incorrect"}'
 

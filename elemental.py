@@ -14,10 +14,10 @@ parser.add_argument('--port', type=int, help='what port the provider should run 
 parser.add_argument('--host', type=str, help='what host ip the provider should run on', default="")
 parser.add_argument('--encoding', type=str, help='what encoding algorithm scheme to use, client must be the same', default="ascii")
 parser.add_argument('--providername', type=str, help='name of the provider', default="LOCALPROVIDER")
-parser.add_argument('--storagepath', type=str, help='name of the provider', default="serverstorage")
-parser.add_argument('--jsonfileindent', type=int, help='name of the provider', default=2)
-parser.add_argument('--sendotherusersdata', type=bool, help='name of the provider', default=False)
-parser.add_argument('--providerNameInConsole', type=str, help='name of the provider', default="[SERVER]")
+parser.add_argument('--storagepath', type=str, help='path of the provider storage', default="providerstorage")
+parser.add_argument('--jsonfileindent', type=int, help='how many indents to put in json files', default=2)
+parser.add_argument('--sendotherusersdata', type=bool, help='send everyone messages (EXPERIMENTAL)', default=False)
+parser.add_argument('--providernameinconsole', type=str, help='name of the provider in the console', default="[SERVER]")
 
 args = parser.parse_args()
 
@@ -29,17 +29,17 @@ class ECONFIG:
 	encoding = args.encoding
 	providername = args.providername
 	providerwelcome = "welcome to your LOCALPROVIDER, the BEST test provider on localhost"
-	serverStorage = args.storagepath
+	providerstorage = args.storagepath
 	providerNameInConsole = args.providerNameInConsole
 	jsonfileindent = args.jsonfileindent
 	sendotherusersdata = args.sendotherusersdata
 
-if not os.path.exists(ECONFIG.serverStorage):
+if not os.path.exists(ECONFIG.providerstorage):
 	print("server storage folder does not exist, creating it")
-	os.mkdir(ECONFIG.serverStorage)
-	open(ECONFIG.serverStorage + os.sep + "config.json", "w")
-	os.mkdir(ECONFIG.serverStorage + os.sep + "users")
-	os.mkdir(ECONFIG.serverStorage + os.sep + "servers")
+	os.mkdir(ECONFIG.providerstorage)
+	open(ECONFIG.providerstorage + os.sep + "config.json", "w")
+	os.mkdir(ECONFIG.providerstorage + os.sep + "users")
+	os.mkdir(ECONFIG.providerstorage + os.sep + "servers")
 
 def new_client(clientsocket, addr):
 	client = UserClient(clientsocket, addr, ECONFIG)
