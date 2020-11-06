@@ -5,6 +5,7 @@ import argparse
 import os
 import datetime
 import shutil
+import base64
 from threading import Thread
 from elementaluser import UserClient
 
@@ -30,9 +31,11 @@ class ECONFIG:
     providername = args.providername
     providerwelcome = "welcome to your LOCALPROVIDER, the BEST test provider on localhost"
     providerstorage = args.storagepath
-    providerNameInConsole = args.providerNameInConsole
+    providernameinconsole = args.providernameinconsole
+    providericonfilename = "icon.png" # located in the base of providerstorage, must be 64x64
     jsonfileindent = args.jsonfileindent
     sendotherusersdata = args.sendotherusersdata
+    providericondata = None
 
 if not os.path.exists(ECONFIG.providerstorage):
     print("server storage folder does not exist, creating it")
@@ -40,6 +43,14 @@ if not os.path.exists(ECONFIG.providerstorage):
     open(ECONFIG.providerstorage + os.sep + "config.json", "w")
     os.mkdir(ECONFIG.providerstorage + os.sep + "users")
     os.mkdir(ECONFIG.providerstorage + os.sep + "servers")
+else:
+    if os.path.isfile(ECONFIG.providerstorage + os.sep + ECONFIG.providericonfilename):
+        # print("encoded icon.png as:")
+        with open(ECONFIG.providerstorage + os.sep + ECONFIG.providericonfilename, "rb") as fp:
+            b64pic = base64.b64encode(fp.read()).decode(encoding="UTF-8")
+            # print(b64pic)
+            print("encoded " + ECONFIG.providericonfilename + " as base64")
+            ECONFIG.providericondata = b64pic
 
 def new_client(clientsocket, addr):
     client = UserClient(clientsocket, addr, ECONFIG)
@@ -48,9 +59,9 @@ def new_client(clientsocket, addr):
     while True:
         try:
             clientmsg = clientsocket.recv(4096)
-            print("(" + getTime() + ") | " + ECONFIG.providerNameInConsole + " <== [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + clientmsg.decode(ECONFIG.encoding))
+            print("(" + getTime() + ") | " + ECONFIG.providernameinconsole + " <== [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + clientmsg.decode(ECONFIG.encoding))
             resp = client.rawcommand(clientmsg.decode(ECONFIG.encoding))
-            print("(" + getTime() + ") | " + ECONFIG.providerNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + resp)
+            print("(" + getTime() + ") | " + ECONFIG.providernameinconsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + resp)
             clientsocket.send(resp.encode(ECONFIG.encoding))
         except socket.error as e:
             print("(" + getTime() + ") | closing connection because of socket error, details below")
@@ -69,7 +80,7 @@ def transmit(jsondata, servername, user):
                     if servername in clients[i].joinedservers:
                         #print("sending")
                         jsontext = json.dumps(jsondata)
-                        print("(" + getTime() + ") | " + ECONFIG.providerNameInConsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + json.dumps(jsontext))
+                        print("(" + getTime() + ") | " + ECONFIG.providernameinconsole + " ==> [" + str(addr[0]) + ":" + str(addr[1]) + "] | " + json.dumps(jsontext))
                         clients[i].clientsocket.send(jsontext.encode(ECONFIG.encoding))
 
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 

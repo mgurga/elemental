@@ -4,6 +4,7 @@ import argparse
 import os
 import datetime
 import shutil
+import base64
 
 class UserClient:
     usernm = ""
@@ -261,6 +262,8 @@ class UserClient:
         providerinfo["resp"] = True
         providerinfo["name"] = self.ECONFIG.providername
         providerinfo["welcome"] = self.ECONFIG.providerwelcome
+        if not self.ECONFIG.providericondata == None:
+            providerinfo["icon"] = self.ECONFIG.providericondata
 
         return json.dumps(providerinfo)
 
