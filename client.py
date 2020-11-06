@@ -73,7 +73,8 @@ getprovidernm["passwd"] = passwd
 getprovidertext = json.dumps(getprovidernm)
 serversocket.send(getprovidertext.encode(encoding))
 
-providerrespsock = serversocket.recv(4096)
+providerrespsock = serversocket.recv(32768)
+# print(providerrespsock.decode(encoding))
 providerresp = json.loads(providerrespsock.decode(encoding))
 
 if providerresp["resp"] == True:
