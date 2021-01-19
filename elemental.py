@@ -1,11 +1,5 @@
+import socket, json, argparse, os, datetime, shutil, base64
 
-import socket
-import json
-import argparse
-import os
-import datetime
-import shutil
-import base64
 from threading import Thread
 from elementaluser import UserClient
 
