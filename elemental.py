@@ -1,7 +1,7 @@
 import socket, json, argparse, os, datetime, shutil, base64
 
 from threading import Thread
-from elementaluser import UserClient
+from user import UserClient
 
 parser = argparse.ArgumentParser(description='give the elemental server some command line arguments')
 

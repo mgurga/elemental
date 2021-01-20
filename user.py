@@ -1,6 +1,6 @@
 import socket, json, argparse, os, datetime, shutil, base64
 
-from elementalauth import UserAuth
+from auth import UserAuth
 
 class UserClient:
     userkey = None
