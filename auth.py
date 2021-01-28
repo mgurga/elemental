@@ -9,16 +9,14 @@ class UserKey:
     usernm: str
     passwd: str
 
-validkeychars = "abcdefghijklmnopqrstuvwxyz0123456789.,?%&*$#@/;:[]-+!()"
+validkeychars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?%&*$#@/;:[]-+!()"
 keylifetime = 3600 # in seconds
 
 class UserAuth:
     userkey = None
 
     def __init__(self, usernm, passwd, ecfg):
-        key = ""
-        for _ in range(0, 25):
-            key += random.choice(validkeychars)
+        key = ''.join(random.choices(validkeychars, k=25))
 
         self.ECONFIG = ecfg
         self.userkey = UserKey(key, datetime.datetime.now(), usernm, passwd)

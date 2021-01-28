@@ -39,8 +39,8 @@ class UserClient:
             self.usernm = usernm
             self.passwd = passwd
             self.joinedservers = userfilejson["joinedservers"]
-            userkey = UserAuth(usernm, passwd, self.ECONFIG)
-            return '{"resp": true, "key": "{}"}'.format(userkey.userkey)
+            self.userkey = UserAuth(usernm, passwd, self.ECONFIG)
+            return '{"resp": true, "key": "' + self.userkey.userkey.key + '"}'
         else:
             return '{"resp": false, "reason":"password is incorrect"}'
     
@@ -71,7 +71,7 @@ class UserClient:
         serverinfojson["channels"].append(name)
         serverinfofile.close()
 
-        if not self.userkey.usernm == serverinfojson["owner"]:
+        if not self.userkey.userkey.usernm == serverinfojson["owner"]:
             return '{"resp": false, "reason":"only owner can create channels"}'
 
         self.putjson(serverinfojson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
@@ -121,12 +121,12 @@ class UserClient:
         if not os.path.exists(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info"):
             return '{"resp": false, "reason":"server does not exist"}'
 
-        userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.usernm)
+        userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.userkey.usernm)
         serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
         userinfo["joinedservers"].remove(servername)
-        serverinfo["users"].remove(self.userkey.usernm)
+        serverinfo["users"].remove(self.userkey.userkey.usernm)
 
-        self.putjson(userinfo, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.usernm)
+        self.putjson(userinfo, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.userkey.usernm)
         self.putjson(serverinfo, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
         return '{"resp": true}'
@@ -148,7 +148,7 @@ class UserClient:
         messagejson = json.loads("{}")
         messagejson["message"] = msg
         messagejson["timestamp"] = datetime.datetime.now().timestamp()
-        messagejson["author"] = self.userkey.usernm
+        messagejson["author"] = self.userkey.userkey.usernm
 
         self.putjson(messagejson, self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + channel + os.sep + str(channelmessages["messages"] - 1))
 
@@ -181,7 +181,7 @@ class UserClient:
 
         if end > channelmessages["messages"] or begin > channelmessages["messages"]:
             return '{"resp": false, "reason":"end or begin is less than 0"}'
-        if not self.userkey.usernm in serverinfo["users"]:
+        if not self.userkey.userkey.usernm in serverinfo["users"]:
             return '{"resp": false, "reason":"user not in server"}'
 
         outjson = json.loads("{}")
@@ -209,7 +209,7 @@ class UserClient:
         return json.dumps(outjson)
 
     def getjoinedservers(self):
-        userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.usernm)
+        userinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.userkey.usernm)
 
         outjson = json.loads("{}")
         outjson["resp"] = True
@@ -223,7 +223,7 @@ class UserClient:
         
         serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
-        if not self.userkey.usernm in serverinfo["users"]:
+        if not self.userkey.userkey.usernm in serverinfo["users"]:
             return '{"resp": false, "reason":"user not in server"}'
 
         outjson = json.loads("{}")
@@ -240,7 +240,7 @@ class UserClient:
 
         serverinfo = self.openjson(self.ECONFIG.providerstorage + os.sep + "servers" + os.sep + servername + os.sep + "info")
 
-        if not self.userkey.usernm == serverinfo["owner"]:
+        if not self.userkey.userkey.usernm == serverinfo["owner"]:
             return '{"resp": false, "reason":"user not owner of the server"}'
         
         serverinfo["channels"].remove(name)
@@ -269,7 +269,10 @@ class UserClient:
         commandjson = json.loads(command)
         call = commandjson["call"]
 
-        # Sanity Checks, makes sure usernm and passwd are in the request
+        # print(commandjson)
+        # print(call)
+        # print(commandjson["usernm"])
+        # print(commandjson["passwd"])
 
         try:
             if call == "login":
@@ -317,7 +320,8 @@ class UserClient:
                 print("UNKNOWN CALL:")
                 print(json.dumps(commandjson))
                 return out
-        except KeyError:
+        except KeyError as err:
+            print(err)
             return '{"resp": false, "reason":"incorrect request values"}'
 
     def msg(self, msg):
