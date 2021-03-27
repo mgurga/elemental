@@ -57,7 +57,7 @@ Wiki will go in depth on required values and responses
 - ```getserverchannels```
 - ```deletechannel```
 
-## Client (client.py)
+## Client ([etttc](https://github.com/mgurga/etttc))
 ![Client Picture Demo](https://raw.githubusercontent.com/rokie95/elemental/master/demos/clientserverpic.png)
 
 A very simple client meant to be used as an example
