@@ -1,6 +1,10 @@
-import datetime, random, os, json
+import datetime
+import random
+import os
+import json
 
 from dataclasses import dataclass
+
 
 @dataclass
 class UserKey:
@@ -9,8 +13,10 @@ class UserKey:
     usernm: str
     passwd: str
 
+
 validkeychars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?%&*$#@/;:[]-+!()"
-keylifetime = 3600 # in seconds
+keylifetime = 3600  # in seconds
+
 
 class UserAuth:
     userkey = None
@@ -33,7 +39,8 @@ class UserAuth:
             return (False, "username does not exist")
 
         # check if username-password combination is still valid
-        userfile = open(self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.usernm, "r")
+        userfile = open(self.ECONFIG.providerstorage + os.sep +
+                        "users" + os.sep + self.userkey.usernm, "r")
         userfiletext = userfile.read()
         userfilejson = json.loads(userfiletext)
         # userfilejson["timesloggedin"] = userfilejson["timesloggedin"] + 1
@@ -42,7 +49,8 @@ class UserAuth:
         if not userfilejson["passwd"] == self.userkey.passwd:
             return (False, "password is incorrect")
 
-        self.putjson(userfilejson, self.ECONFIG.providerstorage + os.sep + "users" + os.sep + self.userkey.usernm)
+        self.utils.putjson(userfilejson, self.ECONFIG.providerstorage +
+                           os.sep + "users" + os.sep + self.userkey.usernm)
         userfile.close()
         self.joinedservers = userfilejson["joinedservers"]
         self.userkey.creationDate = datetime.datetime.now().timestamp
